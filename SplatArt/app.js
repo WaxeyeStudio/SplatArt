@@ -198,24 +198,39 @@ if (CONFIG.useHalftone) {
     composer.addPass(halftonePass);
 }
 
-// --- 5. LOAD INITIAL RANDOM SPLAT ---
+// --- 5. PRELOAD ALL SPLATS (OBJECT POOL) ---
 const pivot = new THREE.Group();
 scene.add(pivot);
 pivot.rotation.y = CONFIG.initialRotationY;
 
-let currentSplatIndex = Math.floor(Math.random() * CONFIG.splats.length);
-let activeSplat = new SplatMesh({ url: CONFIG.splats[currentSplatIndex] });
+// Array to hold all our preloaded 3D objects
+const splatPool = [];
 
+// Calculate final scale once based on settings
 const targetScaleY = CONFIG.flipScaleY ? -CONFIG.baseScale : CONFIG.baseScale;
 const finalScale = new THREE.Vector3(CONFIG.baseScale, targetScaleY, CONFIG.baseScale);
 
-activeSplat.scale.set(0, 0, 0);
-
-if (CONFIG.rotate180Z) {
-    activeSplat.rotation.z = Math.PI; 
+// Loop through the config and build ALL of them into memory immediately
+for (let i = 0; i < CONFIG.splats.length; i++) {
+    let mesh = new SplatMesh({ url: CONFIG.splats[i] });
+    
+    if (CONFIG.rotate180Z) {
+        mesh.rotation.z = Math.PI; 
+    }
+    
+    splatPool.push(mesh);
 }
 
+// Pick a random starting index
+let currentSplatIndex = Math.floor(Math.random() * CONFIG.splats.length);
+
+// Assign the active splat from our pool
+let activeSplat = splatPool[currentSplatIndex];
+
+// Start the first one at zero scale for the spawn-in animation
+activeSplat.scale.set(0, 0, 0);
 pivot.add(activeSplat);
+
 
 // --- 5.5 CLICK FLASH SPHERE SETUP ---
 const flashGeometry = new THREE.SphereGeometry(CONFIG.flashSize, 16, 16);
@@ -239,38 +254,29 @@ let targetMouseY = 0;
 let currentDistortion = 0; 
 let currentBloom = CONFIG.bloomStrength; 
 
-// Spawn Animation Trackers
 let isSpawning = true;
 let spawnTimer = 0;
-
-// Gyroscope tracking flag
 let gyroInitialized = false;
 
-// --- NEW: SPLAT SWAP TRACKER ---
+// Splat Swap Tracker
 let clickCount = 0;
 
 function loadNewSplat() {
-    // 1. Remove and clean up the old splat
+    // 1. Remove the old splat from the screen (DO NOT dispose it, we keep it in the pool!)
     pivot.remove(activeSplat);
-    if (typeof activeSplat.dispose === 'function') {
-        activeSplat.dispose();
-    }
 
-    // 2. Pick a new random splat (Guaranteed not to be the exact same one)
+    // 2. Pick a new random splat index (guaranteed not to be the exact same one)
     let newIndex = Math.floor(Math.random() * CONFIG.splats.length);
     while (newIndex === currentSplatIndex && CONFIG.splats.length > 1) {
         newIndex = Math.floor(Math.random() * CONFIG.splats.length);
     }
     currentSplatIndex = newIndex;
 
-    // 3. Create and add the new splat instantly at 100% size
-    activeSplat = new SplatMesh({ url: CONFIG.splats[currentSplatIndex] });
+    // 3. Grab the new preloaded splat from our pool
+    activeSplat = splatPool[currentSplatIndex];
+
+    // 4. Snap it to full size instantly and add it to the scene
     activeSplat.scale.copy(finalScale);
-
-    if (CONFIG.rotate180Z) {
-        activeSplat.rotation.z = Math.PI; 
-    }
-
     pivot.add(activeSplat);
 }
 
@@ -290,7 +296,7 @@ function triggerClickEffects(clientX, clientY) {
     clickFlash.material.opacity = 1.0;
     clickFlash.visible = true;
 
-    // --- NEW: TRIGGER SWAP EVERY 4TH CLICK ---
+    // Trigger swap every 4th click
     clickCount++;
     if (clickCount % 4 === 0) {
         loadNewSplat();
@@ -299,23 +305,17 @@ function triggerClickEffects(clientX, clientY) {
 
 // --- GYROSCOPE MATH FUNCTION ---
 function handleDeviceOrientation(event) {
-    let gamma = event.gamma; // Left/Right tilt (-90 to 90)
-    let beta = event.beta;   // Front/Back tilt (-180 to 180)
+    let gamma = event.gamma; 
+    let beta = event.beta;   
 
-    // Bail out if the device doesn't actually have a gyroscope
     if (gamma === null || beta === null) return;
 
-    // Clamp the raw degrees to a reasonable holding range so it doesn't spin wildly
     let clampedGamma = Math.max(-30, Math.min(30, gamma));
-    
-    // Normal holding position for a phone is tilted back about 45 degrees
     let clampedBeta = Math.max(15, Math.min(75, beta));
 
-    // Map those degree ranges to our WebGL -1 to 1 screen space
     let mappedX = clampedGamma / 30;
     let mappedY = -((clampedBeta - 45) / 30);
 
-    // Apply sensitivity and update the camera targets!
     targetMouseX = mappedX * CONFIG.gyroSensitivity;
     targetMouseY = mappedY * CONFIG.gyroSensitivity;
 }
@@ -332,7 +332,6 @@ window.addEventListener('mousedown', (e) => {
 
 // B. Mobile Touch & Gyro Support
 window.addEventListener('touchmove', (e) => {
-    // If the gyro is active, we let it drive the camera instead of touch dragging
     if (!gyroInitialized && e.touches.length > 0) {
         const touch = e.touches[0];
         targetMouseX = (touch.clientX / window.innerWidth) * 2 - 1;
@@ -342,7 +341,6 @@ window.addEventListener('touchmove', (e) => {
 
 window.addEventListener('touchstart', (e) => {
     if (e.touches.length > 0) {
-        // 1. Setup the touch impact
         const touch = e.touches[0];
         
         if (!gyroInitialized) {
@@ -352,10 +350,8 @@ window.addEventListener('touchstart', (e) => {
         
         triggerClickEffects(touch.clientX, touch.clientY);
 
-        // 2. Secretly request Gyroscope permissions on the first tap!
         if (!gyroInitialized) {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS 13+ requires explicit permission
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
@@ -363,9 +359,8 @@ window.addEventListener('touchstart', (e) => {
                             gyroInitialized = true;
                         }
                     })
-                    .catch(console.error); // Fails silently if they deny it
+                    .catch(console.error); 
             } else {
-                // Standard Android/Desktop doesn't require explicit permission
                 window.addEventListener('deviceorientation', handleDeviceOrientation);
                 gyroInitialized = true;
             }
