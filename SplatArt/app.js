@@ -11,11 +11,12 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 // ==========================================
 const CONFIG = {
     splats: [
-        'splat2_shell.sog', 
-        'splat3_pm1.sog',
-        'splat4_sunset.sog',
-        'splat5_party.sog',
-		'splat6_uro.sog'
+        // Updated paths to point to the new public/splats/ folder
+        'splats/splat2_shell.sog', 
+        'splats/splat3_pm1.sog',
+        'splats/splat4_sunset.sog',
+        'splats/splat5_party.sog',
+        'splats/splat6_uro.sog'
     ],
     
     baseScale: 1.0,                
@@ -67,9 +68,8 @@ const CONFIG = {
     hoverSmoothness: 2.0,          
     cameraPullbackZ: 30,
     
-    // --- NEW: GYROSCOPE SETTINGS ---
-    gyroSensitivity: 1.2           // How dramatically the camera moves when you tilt the phone
-    // -------------------------------
+    // GYROSCOPE SETTINGS
+    gyroSensitivity: 1.2           
 };
 // ==========================================
 
@@ -263,7 +263,7 @@ function triggerClickEffects(clientX, clientY) {
     clickFlash.visible = true;
 }
 
-// --- NEW: GYROSCOPE MATH FUNCTION ---
+// --- GYROSCOPE MATH FUNCTION ---
 function handleDeviceOrientation(event) {
     let gamma = event.gamma; // Left/Right tilt (-90 to 90)
     let beta = event.beta;   // Front/Back tilt (-180 to 180)
@@ -285,7 +285,6 @@ function handleDeviceOrientation(event) {
     targetMouseX = mappedX * CONFIG.gyroSensitivity;
     targetMouseY = mappedY * CONFIG.gyroSensitivity;
 }
-// ------------------------------------
 
 // A. Desktop Mouse Support
 window.addEventListener('mousemove', (e) => {
@@ -341,11 +340,13 @@ window.addEventListener('touchstart', (e) => {
 }, { passive: true });
 
 // --- 7. ANIMATION LOOP ---
-const clock = new THREE.Clock();
+const timer = new THREE.Timer(); // NEW TIMER INSTANCE USING CORE THREE
 
 renderer.setAnimationLoop(() => {
-    const dt = Math.min(clock.getDelta(), 0.1); 
-    const time = clock.getElapsedTime();
+    timer.update(); // Manually update the timer each frame
+
+    const dt = Math.min(timer.getDelta(), 0.1); 
+    const time = timer.getElapsed(); // Use getElapsed() instead of getElapsedTime()
 	
     // --- SPAWN-IN ANIMATION ---
     if (isSpawning) {
