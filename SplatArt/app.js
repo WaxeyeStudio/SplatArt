@@ -6,12 +6,12 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { HalftonePass } from 'three/addons/postprocessing/HalftonePass.js'; 
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
+
 // ==========================================
 // --- 1. CONFIGURATION ---
 // ==========================================
 const CONFIG = {
     splats: [
-        // Updated paths to point to the new public/splats/ folder
         'splats/splat2_shell.sog', 
         'splats/splat3_pm1.sog',
         'splats/splat4_sunset.sog',
@@ -246,6 +246,34 @@ let spawnTimer = 0;
 // Gyroscope tracking flag
 let gyroInitialized = false;
 
+// --- NEW: SPLAT SWAP TRACKER ---
+let clickCount = 0;
+
+function loadNewSplat() {
+    // 1. Remove and clean up the old splat
+    pivot.remove(activeSplat);
+    if (typeof activeSplat.dispose === 'function') {
+        activeSplat.dispose();
+    }
+
+    // 2. Pick a new random splat (Guaranteed not to be the exact same one)
+    let newIndex = Math.floor(Math.random() * CONFIG.splats.length);
+    while (newIndex === currentSplatIndex && CONFIG.splats.length > 1) {
+        newIndex = Math.floor(Math.random() * CONFIG.splats.length);
+    }
+    currentSplatIndex = newIndex;
+
+    // 3. Create and add the new splat instantly at 100% size
+    activeSplat = new SplatMesh({ url: CONFIG.splats[currentSplatIndex] });
+    activeSplat.scale.copy(finalScale);
+
+    if (CONFIG.rotate180Z) {
+        activeSplat.rotation.z = Math.PI; 
+    }
+
+    pivot.add(activeSplat);
+}
+
 function triggerClickEffects(clientX, clientY) {
     const clickUvX = clientX / window.innerWidth;
     const clickUvY = 1.0 - (clientY / window.innerHeight);
@@ -261,6 +289,12 @@ function triggerClickEffects(clientX, clientY) {
     clickFlash.scale.set(1, 1, 1);
     clickFlash.material.opacity = 1.0;
     clickFlash.visible = true;
+
+    // --- NEW: TRIGGER SWAP EVERY 4TH CLICK ---
+    clickCount++;
+    if (clickCount % 4 === 0) {
+        loadNewSplat();
+    }
 }
 
 // --- GYROSCOPE MATH FUNCTION ---
@@ -340,13 +374,13 @@ window.addEventListener('touchstart', (e) => {
 }, { passive: true });
 
 // --- 7. ANIMATION LOOP ---
-const timer = new THREE.Timer(); // NEW TIMER INSTANCE USING CORE THREE
+const timer = new THREE.Timer(); 
 
 renderer.setAnimationLoop(() => {
-    timer.update(); // Manually update the timer each frame
+    timer.update(); 
 
     const dt = Math.min(timer.getDelta(), 0.1); 
-    const time = timer.getElapsed(); // Use getElapsed() instead of getElapsedTime()
+    const time = timer.getElapsed(); 
 	
     // --- SPAWN-IN ANIMATION ---
     if (isSpawning) {
