@@ -15,11 +15,15 @@ const CONFIG = {
         'splats/splat3_pm1.sog',
         'splats/splat4_sunset.sog',
         'splats/splat5_party.sog',
-        'splats/splat6_uro.sog'
+        'splats/splat6_uro.sog',
+		'splats/comvita1.sog',
+		'splats/gallipoli2.sog',
+		'splats/headsetBoy.sog',
+		'splats/motat1.sog'
     ],
     
     // INTERACTION SETTINGS
-    clicksToSwap: 3,               // <-- NEW: How many clicks/taps before loading a new splat
+    clicksToSwap: 2,               // <-- NEW: How many clicks/taps before loading a new splat
 
     baseScale: 1.0,                
     initialRotationY: THREE.MathUtils.degToRad(0), 
@@ -58,7 +62,7 @@ const CONFIG = {
     halftoneBlending: 0.4,         
 
     // Bloom Settings
-    bloomStrength: 0.2,            
+    bloomStrength: 0.1,            
     bloomClickStrength: 2.5,       
     bloomRadius: 0.5,              
     bloomThreshold: 0.7,           
