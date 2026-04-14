@@ -6,7 +6,6 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { HalftonePass } from 'three/addons/postprocessing/HalftonePass.js'; 
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
-
 // ==========================================
 // --- 1. CONFIGURATION ---
 // ==========================================
@@ -19,6 +18,9 @@ const CONFIG = {
         'splats/splat6_uro.sog'
     ],
     
+    // INTERACTION SETTINGS
+    clicksToSwap: 3,               // <-- NEW: How many clicks/taps before loading a new splat
+
     baseScale: 1.0,                
     initialRotationY: THREE.MathUtils.degToRad(0), 
 
@@ -45,8 +47,8 @@ const CONFIG = {
     flashIntensity: 10.0,          
 
     // VIGNETTE SETTINGS
-    vignetteDarkness: 0.4,         
-    vignetteScale: 1.2,            
+    vignetteDarkness: 0.5,         
+    vignetteScale: 1.0,            
 
     // HALFTONE SETTINGS
     useHalftone: true,             
@@ -63,8 +65,8 @@ const CONFIG = {
 
     // Camera & Movement Settings
     oscillationSpeed: 0.1,         
-    oscillationAngle: THREE.MathUtils.degToRad(15), 
-    hoverDistance: 6.0,            
+    oscillationAngle: THREE.MathUtils.degToRad(5), 
+    hoverDistance: 4.0,            
     hoverSmoothness: 2.0,          
     cameraPullbackZ: 30,
     
@@ -258,14 +260,17 @@ let isSpawning = true;
 let spawnTimer = 0;
 let gyroInitialized = false;
 
+// --- NEW: Touch active flag to override gyro ---
+let isTouching = false; 
+
 // Splat Swap Tracker
 let clickCount = 0;
 
 function loadNewSplat() {
-    // 1. Remove the old splat from the screen (DO NOT dispose it, we keep it in the pool!)
+    // 1. Remove the old splat from the screen
     pivot.remove(activeSplat);
 
-    // 2. Pick a new random splat index (guaranteed not to be the exact same one)
+    // 2. Pick a new random splat index
     let newIndex = Math.floor(Math.random() * CONFIG.splats.length);
     while (newIndex === currentSplatIndex && CONFIG.splats.length > 1) {
         newIndex = Math.floor(Math.random() * CONFIG.splats.length);
@@ -296,15 +301,18 @@ function triggerClickEffects(clientX, clientY) {
     clickFlash.material.opacity = 1.0;
     clickFlash.visible = true;
 
-    // Trigger swap every 4th click
+    // Trigger swap based on the CONFIG variable
     clickCount++;
-    if (clickCount % 4 === 0) {
+    if (clickCount % CONFIG.clicksToSwap === 0) {
         loadNewSplat();
     }
 }
 
 // --- GYROSCOPE MATH FUNCTION ---
 function handleDeviceOrientation(event) {
+    // If the user's finger is on the screen, ignore the gyro completely!
+    if (isTouching) return; 
+
     let gamma = event.gamma; 
     let beta = event.beta;   
 
@@ -332,7 +340,8 @@ window.addEventListener('mousedown', (e) => {
 
 // B. Mobile Touch & Gyro Support
 window.addEventListener('touchmove', (e) => {
-    if (!gyroInitialized && e.touches.length > 0) {
+    // We removed the `!gyroInitialized` check here so it ALWAYS registers dragging
+    if (e.touches.length > 0) {
         const touch = e.touches[0];
         targetMouseX = (touch.clientX / window.innerWidth) * 2 - 1;
         targetMouseY = -(touch.clientY / window.innerHeight) * 2 + 1;
@@ -340,13 +349,14 @@ window.addEventListener('touchmove', (e) => {
 }, { passive: true }); 
 
 window.addEventListener('touchstart', (e) => {
+    isTouching = true; // Tell the system a finger is down
+    
     if (e.touches.length > 0) {
         const touch = e.touches[0];
         
-        if (!gyroInitialized) {
-            targetMouseX = (touch.clientX / window.innerWidth) * 2 - 1;
-            targetMouseY = -(touch.clientY / window.innerHeight) * 2 + 1;
-        }
+        // Always snap the camera to the tap position instantly
+        targetMouseX = (touch.clientX / window.innerWidth) * 2 - 1;
+        targetMouseY = -(touch.clientY / window.innerHeight) * 2 + 1;
         
         triggerClickEffects(touch.clientX, touch.clientY);
 
@@ -367,6 +377,14 @@ window.addEventListener('touchstart', (e) => {
         }
     }
 }, { passive: true });
+
+// When the user lifts their finger, re-enable the gyro
+window.addEventListener('touchend', () => {
+    isTouching = false;
+});
+window.addEventListener('touchcancel', () => {
+    isTouching = false;
+});
 
 // --- 7. ANIMATION LOOP ---
 const timer = new THREE.Timer(); 
