@@ -20,7 +20,7 @@ const CONFIG = {
     ],
     
     baseScale: 1.0,                
-    initialRotationY: THREE.MathUtils.degToRad(-20), 
+    initialRotationY: THREE.MathUtils.degToRad(0), 
 
     // SPAWN SETTINGS
     spawnDuration: 1,            
