@@ -1,3 +1,24 @@
+WORKFLOW FOR ADDING NEW SPLATS
+
+ml-sharp 	- put images in "images" and run "generateSplats.bat"	(exists in klc local D:\repoTools\AppleML_sharp)
+supersplat	- align PLYs to an existing one inside Supersplat (website), then export as SOG to folder "outputSuperSplat"
+nano		- run nanoGS, export "outputSuperSplat" folder to "outputNano" folder
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------
+outdated workflow commandline for nanoGS
+
 clone and setup nanoGS https://github.com/Enndee/Simple_NanoGS_GUI
 
 add gsBox executable to nanoGS main folder (https://github.com/gotoeasy/gsbox/releases/tag/v4.7.1)
@@ -5,11 +26,7 @@ add gsBox executable to nanoGS main folder (https://github.com/gotoeasy/gsbox/re
 run commands on PLY files:
 
 d:
-
 cd D:\repoTools\nanoGS\Simple_NanoGS_GUI
-
 .venv\Scripts\activate
-
 python simplification.py --ply "C:\Users\klcZ\Downloads\splat5_party.ply" -r 0.3 --k 8 --opacity_threshold 0.18 --lam_geo 1.0 --lam_sh 0.5 --device auto --block_edges 0 --output "C:\Users\klcZ\Downloads\reducedSplat.ply"
-
 .\gsbox.exe p2g -i "C:\Users\klcZ\Downloads\reducedSplat.ply" -o "C:\Users\klcZ\Downloads\reducedSplat.sog"
