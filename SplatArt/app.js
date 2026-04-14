@@ -12,14 +12,14 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 const CONFIG = {
     splats: [
         'splats/splat2_shell.sog', 
-        'splats/splat3_pm1.sog',
-        'splats/splat4_sunset.sog',
         'splats/splat5_party.sog',
         'splats/splat6_uro.sog',
-		'splats/comvita1.sog',
+		'splats/comvita1Darker.sog',
 		'splats/gallipoli2.sog',
 		'splats/headsetBoy.sog',
-		'splats/motat1.sog'
+		'splats/motat1.sog',
+		'splats/Orcon_CS_01.sog',
+		'splats/cake18.sog'
     ],
     
     // INTERACTION SETTINGS
