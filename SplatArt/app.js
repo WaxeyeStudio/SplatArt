@@ -19,7 +19,8 @@ const CONFIG = {
 		'splats/headsetBoy.sog',
 		'splats/motat1.sog',
 		'splats/Orcon_CS_01.sog',
-		'splats/cake18.sog'
+		'splats/cake18.sog',
+		'splats/downer1.sog'
     ],
     
     // INTERACTION SETTINGS
