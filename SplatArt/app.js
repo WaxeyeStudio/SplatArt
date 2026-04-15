@@ -15,12 +15,12 @@ const CONFIG = {
         'splats/splat5_party.sog',
         'splats/splat6_uro.sog',
 		'splats/comvita1Darker.sog',
-		'splats/gallipoli2.sog',
+		'splats/gallipoli3.sog',
 		'splats/headsetBoy.sog',
 		'splats/motat1.sog',
 		'splats/Orcon_CS_01.sog',
 		'splats/cake18.sog',
-		'splats/downer1.sog'
+		'splats/downer2_simplified.sog'
     ],
     
     // INTERACTION SETTINGS
@@ -38,7 +38,7 @@ const CONFIG = {
     rotate180Z: false,             
 
     // DEPTH OF FIELD SETTINGS
-    dofStrength: 2.0,              
+    dofStrength: 1.2,              
     dofRadius: 0.3,                
 
     // SCREEN DISTORTION & BLUR SETTINGS
@@ -57,10 +57,10 @@ const CONFIG = {
 
     // HALFTONE SETTINGS
     useHalftone: true,             
-    halftoneShape: 1,              
+    halftoneShape: 2,              
     halftoneRadius: 4.0,           
     halftoneScatter: 0.0,          
-    halftoneBlending: 0.4,         
+    halftoneBlending: 0.2,         
 
     // Bloom Settings
     bloomStrength: 0.1,            
